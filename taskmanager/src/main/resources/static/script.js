@@ -65,6 +65,7 @@ function displayProjectList() {
   `).join('');
 }
 
+
 function setupProjectModal() {
   document.getElementById('addProjectBtn').onclick = () => openProjectModal();
   document.getElementById('closeProjectModalBtn').onclick = () => closeProjectModal();

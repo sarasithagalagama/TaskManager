@@ -35,6 +35,29 @@
         + Add Task
       </button>
     </div>
+    <div class="flex gap-4 mb-6">
+  <button id="addProjectBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow">
+    + Add Project
+  </button>
+</div>
+
+<!-- Project Modal -->
+<div id="projectModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 hidden">
+  <div class="bg-gray-900 rounded-lg p-8 w-full max-w-sm shadow-2xl relative">
+    <button id="closeProjectModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-red-400 text-xl">&times;</button>
+    <h2 class="text-2xl font-bold mb-4">Add Project</h2>
+    <form id="projectForm" class="space-y-4">
+      <div>
+        <label class="block mb-1">Project Name</label>
+        <input type="text" id="projectName" class="w-full p-2 rounded bg-gray-800 text-white" required>
+      </div>
+      <div class="flex gap-4 mt-6">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">Save</button>
+        <button type="button" id="cancelProjectBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
 
     <!-- Task List -->
     <div id="taskList" class="space-y-4"></div>

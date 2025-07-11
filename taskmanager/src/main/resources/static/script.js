@@ -209,3 +209,33 @@ function drawChart() {
     }
   });
 }
+
+
+// --- Project Modal setup ---
+document.getElementById('addProjectBtn').onclick = () => openProjectModal();
+document.getElementById('closeProjectModalBtn').onclick = () => closeProjectModal();
+document.getElementById('cancelProjectBtn').onclick = () => closeProjectModal();
+
+function openProjectModal() {
+  document.getElementById('projectName').value = "";
+  document.getElementById('projectModal').classList.remove('hidden');
+}
+function closeProjectModal() {
+  document.getElementById('projectModal').classList.add('hidden');
+}
+
+// Handle project form submit
+document.getElementById('projectForm').onsubmit = function(e) {
+  e.preventDefault();
+  const name = document.getElementById('projectName').value;
+  fetch(`${API_URL}/projects`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name})
+  })
+  .then(res => res.json())
+  .then(data => {
+    fetchProjects();
+    closeProjectModal();
+  });
+};

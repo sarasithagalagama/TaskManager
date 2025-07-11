@@ -1,0 +1,9 @@
+/* style.css */
+/* Custom styles (optional, since Tailwind handles most styling) */
+body {
+  scroll-behavior: smooth;
+}
+
+#taskModal, #projectModal {
+  transition: opacity 0.2s;
+}

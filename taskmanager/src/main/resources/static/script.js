@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchProjects();
   fetchTasks();
   setupModal();
+  setupProjectModal();
 });
 
 function fetchProjects() {
@@ -15,6 +16,7 @@ function fetchProjects() {
       projects = data;
       populateProjectDropdown();
       populateProjectFilter();
+      displayProjectList(); // show the list of projects
     });
 }
 
@@ -31,6 +33,7 @@ function fetchTasks() {
 
 function populateProjectDropdown() {
   const select = document.getElementById('taskProject');
+  if (!select) return;
   select.innerHTML = projects.map(p =>
     `<option value="${p.id}">${p.name}</option>`
   ).join('');
@@ -38,12 +41,91 @@ function populateProjectDropdown() {
 
 function populateProjectFilter() {
   const filter = document.getElementById('projectFilter');
+  if (!filter) return;
   filter.innerHTML = `<option value="">All Projects</option>` +
     projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 }
 
+// ------------- PROJECT MANAGEMENT --------------
+
+function displayProjectList() {
+  const list = document.getElementById('projectList');
+  if (!list) return;
+  list.innerHTML = projects.map(project => `
+    <div class="bg-gray-800 p-3 rounded flex items-center justify-between gap-4">
+      <div>
+        <span class="font-semibold">${project.name}</span>
+        <span class="ml-2 text-xs text-gray-400">[${project.status || "ACTIVE"}]</span>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openProjectModal(${project.id})" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded">Edit</button>
+        <button onclick="deleteProject(${project.id})" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setupProjectModal() {
+  document.getElementById('addProjectBtn').onclick = () => openProjectModal();
+  document.getElementById('closeProjectModalBtn').onclick = () => closeProjectModal();
+  document.getElementById('cancelProjectBtn').onclick = () => closeProjectModal();
+
+  document.getElementById('projectForm').onsubmit = function(e) {
+    e.preventDefault();
+    const id = document.getElementById('projectId').value;
+    const name = document.getElementById('projectName').value;
+    const status = document.getElementById('projectStatus') ? document.getElementById('projectStatus').value : "ACTIVE";
+    const projectData = { name, status };
+    const url = id ? `${API_URL}/projects/${id}` : `${API_URL}/projects`;
+    const method = id ? "PUT" : "POST";
+
+    fetch(url, {
+      method,
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(projectData)
+    })
+    .then(res => res.json())
+    .then(data => {
+      fetchProjects();
+      closeProjectModal();
+    });
+  };
+}
+
+function openProjectModal(projectId) {
+  document.getElementById('projectForm').reset();
+  document.getElementById('projectId').value = '';
+  document.getElementById('projectName').value = '';
+  // If your form has the status dropdown:
+  if (document.getElementById('projectStatus')) {
+    document.getElementById('projectStatus').value = 'ACTIVE';
+  }
+  if (projectId) {
+    const project = projects.find(p => p.id === projectId);
+    if (project) {
+      document.getElementById('projectId').value = project.id;
+      document.getElementById('projectName').value = project.name;
+      if (document.getElementById('projectStatus')) {
+        document.getElementById('projectStatus').value = project.status || 'ACTIVE';
+      }
+    }
+  }
+  document.getElementById('projectModal').classList.remove('hidden');
+}
+
+function closeProjectModal() {
+  document.getElementById('projectModal').classList.add('hidden');
+}
+
+function deleteProject(projectId) {
+  if (!confirm("Are you sure you want to delete this project? All tasks under this project will also be deleted!")) return;
+  fetch(`${API_URL}/projects/${projectId}`, { method: "DELETE" })
+    .then(() => fetchProjects());
+}
+
+// ------------- TASK MANAGEMENT --------------
+
 function displayTasks() {
-  // Filtering and sorting
   const projectId = document.getElementById('projectFilter').value;
   const status = document.getElementById('statusFilter').value;
   const sort = document.getElementById('sortOption').value;
@@ -80,6 +162,8 @@ function formatStatus(status) {
     case "PENDING": return "Pending";
     case "IN_PROGRESS": return "In Progress";
     case "COMPLETED": return "Completed";
+    case "ACTIVE": return "Active";
+    case "ARCHIVED": return "Archived";
     default: return status;
   }
 }
@@ -89,6 +173,7 @@ function formatStatus(status) {
   document.getElementById(id).addEventListener('change', displayTasks)
 );
 
+// --- Task Modal setup ---
 function setupModal() {
   const modal = document.getElementById('taskModal');
   const openBtn = document.getElementById('addTaskBtn');
@@ -209,33 +294,3 @@ function drawChart() {
     }
   });
 }
-
-
-// --- Project Modal setup ---
-document.getElementById('addProjectBtn').onclick = () => openProjectModal();
-document.getElementById('closeProjectModalBtn').onclick = () => closeProjectModal();
-document.getElementById('cancelProjectBtn').onclick = () => closeProjectModal();
-
-function openProjectModal() {
-  document.getElementById('projectName').value = "";
-  document.getElementById('projectModal').classList.remove('hidden');
-}
-function closeProjectModal() {
-  document.getElementById('projectModal').classList.add('hidden');
-}
-
-// Handle project form submit
-document.getElementById('projectForm').onsubmit = function(e) {
-  e.preventDefault();
-  const name = document.getElementById('projectName').value;
-  fetch(`${API_URL}/projects`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({name})
-  })
-  .then(res => res.json())
-  .then(data => {
-    fetchProjects();
-    closeProjectModal();
-  });
-};

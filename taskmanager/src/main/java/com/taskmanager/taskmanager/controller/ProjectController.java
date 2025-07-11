@@ -34,10 +34,12 @@ public class ProjectController {
     public Project updateProject(@PathVariable Long id, @RequestBody Project updatedProject) {
         return projectService.getProjectById(id)
             .map(project -> {
-                project.setName(updatedProject.getName());
-                return projectService.saveProject(project);
+            project.setName(updatedProject.getName());
+            project.setStatus(updatedProject.getStatus()); // Add this line!
+            return projectService.saveProject(project);
             }).orElse(null);
     }
+
 
     @DeleteMapping("/{id}")
     public void deleteProject(@PathVariable Long id) {

@@ -1,128 +1,467 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-900 text-white">
-
+<html lang="en" class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3405/3405870.png" />
+    <style>
+        body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        .modal-active { opacity: 1 !important; transform: scale(1) !important; pointer-events: auto !important;}
+        .modal-hidden { opacity: 0 !important; transform: scale(0.95) !important; pointer-events: none !important;}
+    </style>
 </head>
-
-<body class="min-h-screen p-6 font-sans bg-gray-900 text-white">
-    <div class="max-w-5xl mx-auto">
-
+<body class="min-h-screen p-4 md:p-8 font-sans bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <div class="max-w-6xl mx-auto">
         <!-- Dashboard Summary -->
-        <div class="mb-8">
-            <h1 class="text-4xl font-extrabold mb-2">📋 Task Manager</h1>
-            <div id="dashboard-summary" class="flex gap-6 mb-4"></div>
-            <canvas id="dashboardChart" class="w-full max-w-xl mx-auto mb-2 bg-gray-800 rounded-lg"></canvas>
+        <div class="mb-10">
+            <h1 class="text-5xl md:text-6xl font-extrabold tracking-wide mb-4 flex items-center gap-3 drop-shadow-lg">
+                <span class="bg-gradient-to-r from-indigo-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">Task Manager</span>
+            </h1>
+            <div id="dashboard-summary" class="flex flex-wrap gap-6 mb-6"></div>
+            <div class="flex justify-center">
+                <div class="backdrop-blur-xl bg-white/10 border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-2xl flex items-center justify-center">
+                    <canvas id="dashboardChart" class="!w-72 !h-72"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- Project Filter + Add Buttons -->
-        <div class="flex flex-wrap items-center gap-4 mb-4">
-            <select id="projectFilter" class="bg-gray-800 p-2 rounded text-white"></select>
-            <select id="statusFilter" class="bg-gray-800 p-2 rounded text-white">
+        <div class="flex flex-wrap items-center gap-4 mb-6">
+            <select id="projectFilter" class="backdrop-blur-lg bg-white/10 border border-white/10 p-3 rounded-2xl text-white shadow focus:ring-2 focus:ring-indigo-400 transition"></select>
+            <select id="statusFilter" class="backdrop-blur-lg bg-white/10 border border-white/10 p-3 rounded-2xl text-white shadow focus:ring-2 focus:ring-indigo-400 transition">
                 <option value="">All Status</option>
                 <option value="PENDING">Pending</option>
                 <option value="IN_PROGRESS">In Progress</option>
                 <option value="COMPLETED">Completed</option>
             </select>
-            <select id="sortOption" class="bg-gray-800 p-2 rounded text-white">
+            <select id="sortOption" class="backdrop-blur-lg bg-white/10 border border-white/10 p-3 rounded-2xl text-white shadow focus:ring-2 focus:ring-indigo-400 transition">
                 <option value="dueDate">Sort by Due Date</option>
                 <option value="title">Sort by Title</option>
             </select>
-            <button id="addProjectBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow">
-                + Add Project
+            <button id="addProjectBtn" class="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 transition-transform text-white px-6 py-3 rounded-2xl shadow-2xl font-bold text-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Add Project
             </button>
-            <button id="addTaskBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-                + Add Task
+            <button id="addTaskBtn" class="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:scale-105 transition-transform text-white px-6 py-3 rounded-2xl shadow-2xl font-bold text-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Add Task
             </button>
         </div>
 
-        <!-- Project Management Section -->
-        <div id="projectList" class="space-y-2 mb-6"></div>
-
+        <!-- Projects Section: Dashboard Cards Grid -->
+        <div class="mb-10">
+            <h2 class="text-2xl font-bold mb-4 tracking-wide">Projects</h2>
+            <div id="projectSection" class="grid sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+        </div>
 
         <!-- Task List -->
-        <div id="taskList" class="space-y-4"></div>
+        <div id="taskList" class="space-y-6"></div>
+    </div>
+
+    <!-- Floating Action Buttons (Mobile) -->
+    <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-40 md:hidden">
+        <button id="fabAddProject" class="flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl rounded-full w-16 h-16 text-3xl text-white backdrop-blur-xl border border-white/10 hover:scale-110 transition-transform">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </button>
+        <button id="fabAddTask" class="flex items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 shadow-2xl rounded-full w-16 h-16 text-3xl text-white backdrop-blur-xl border border-white/10 hover:scale-110 transition-transform">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </button>
     </div>
 
     <!-- Task Modal -->
-    <div id="taskModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 hidden">
-        <div class="bg-gray-900 rounded-lg p-8 w-full max-w-md shadow-2xl relative">
-            <button id="closeModalBtn"
-                class="absolute top-2 right-2 text-gray-400 hover:text-red-400 text-xl">&times;</button>
-            <h2 id="modalTitle" class="text-2xl font-bold mb-4">Add Task</h2>
-            <form id="taskForm" class="space-y-4">
+    <div id="taskModal" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50 hidden transition-all duration-300">
+        <div class="backdrop-blur-2xl bg-white/10 border border-white/10 rounded-2xl p-8 w-full max-w-md shadow-2xl relative modal-hidden">
+            <button id="closeModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-red-400 text-2xl font-bold transition">&times;</button>
+            <h2 id="modalTitle" class="text-3xl font-extrabold mb-6 tracking-wide bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">Add Task</h2>
+            <form id="taskForm" class="space-y-5">
                 <input type="hidden" id="taskId" />
                 <div>
-                    <label class="block mb-1">Title</label>
-                    <input type="text" id="taskTitle" class="w-full p-2 rounded bg-gray-800 text-white" required>
+                    <label class="block mb-1 font-semibold">Title</label>
+                    <input type="text" id="taskTitle" class="w-full p-3 rounded-2xl bg-white/10 border border-white/10 text-white focus:ring-2 focus:ring-blue-400 transition" required>
                 </div>
                 <div>
-                    <label class="block mb-1">Description</label>
-                    <textarea id="taskDescription" class="w-full p-2 rounded bg-gray-800 text-white"></textarea>
+                    <label class="block mb-1 font-semibold">Description</label>
+                    <textarea id="taskDescription" class="w-full p-3 rounded-2xl bg-white/10 border border-white/10 text-white focus:ring-2 focus:ring-blue-400 transition"></textarea>
                 </div>
                 <div>
-                    <label class="block mb-1">Status</label>
-                    <select id="taskStatus" class="w-full p-2 rounded bg-gray-800 text-white">
+                    <label class="block mb-1 font-semibold">Status</label>
+                    <select id="taskStatus" class="w-full p-3 rounded-2xl bg-white/10 border border-white/10 text-white focus:ring-2 focus:ring-blue-400 transition">
                         <option value="PENDING">Pending</option>
                         <option value="IN_PROGRESS">In Progress</option>
                         <option value="COMPLETED">Completed</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block mb-1">Due Date</label>
-                    <input type="date" id="taskDueDate" class="w-full p-2 rounded bg-gray-800 text-white">
+                    <label class="block mb-1 font-semibold">Due Date</label>
+                    <input type="date" id="taskDueDate" class="w-full p-3 rounded-2xl bg-white/10 border border-white/10 text-white focus:ring-2 focus:ring-blue-400 transition">
                 </div>
                 <div>
-                    <label class="block mb-1">Project</label>
-                    <select id="taskProject" class="w-full p-2 rounded bg-gray-800 text-white"></select>
+                    <label class="block mb-1 font-semibold">Project</label>
+                    <select id="taskProject" class="w-full p-3 rounded-2xl bg-white/10 border border-white/10 text-white focus:ring-2 focus:ring-blue-400 transition"></select>
                 </div>
-                <div class="flex gap-4 mt-6">
-                    <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
-                    <button type="button" id="cancelBtn"
-                        class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+                <div class="flex gap-4 mt-8">
+                    <button type="submit" class="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:scale-105 transition-transform text-white px-6 py-3 rounded-2xl shadow-2xl font-bold text-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Save
+                    </button>
+                    <button type="button" id="cancelBtn" class="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:scale-105 transition-transform text-white px-6 py-3 rounded-2xl shadow font-bold text-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Cancel
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Project Modal -->
-    <div id="projectModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 hidden">
-        <div class="bg-gray-900 rounded-lg p-8 w-full max-w-sm shadow-2xl relative">
-            <button id="closeProjectModalBtn"
-                class="absolute top-2 right-2 text-gray-400 hover:text-red-400 text-xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-4">Add Project</h2>
-            <form id="projectForm" class="space-y-4">
+    <div id="projectModal" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50 hidden transition-all duration-300">
+        <div class="backdrop-blur-2xl bg-white/10 border border-white/10 rounded-2xl p-8 w-full max-w-sm shadow-2xl relative modal-hidden">
+            <button id="closeProjectModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-red-400 text-2xl font-bold transition">&times;</button>
+            <h2 class="text-3xl font-extrabold mb-6 tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Add Project</h2>
+            <form id="projectForm" class="space-y-5">
                 <input type="hidden" id="projectId" />
                 <div>
-                    <label class="block mb-1">Project Name</label>
-                    <input type="text" id="projectName" class="w-full p-2 rounded bg-gray-800 text-white" required>
+                    <label class="block mb-1 font-semibold">Project Name</label>
+                    <input type="text" id="projectName" class="w-full p-3 rounded-2xl bg-white/10 border border-white/10 text-white focus:ring-2 focus:ring-indigo-400 transition" required>
                 </div>
                 <div>
-                    <label class="block mb-1">Status</label>
-                    <select id="projectStatus" class="w-full p-2 rounded bg-gray-800 text-white">
+                    <label class="block mb-1 font-semibold">Status</label>
+                    <select id="projectStatus" class="w-full p-3 rounded-2xl bg-white/10 border border-white/10 text-white focus:ring-2 focus:ring-indigo-400 transition">
                         <option value="ACTIVE">Active</option>
                         <option value="ARCHIVED">Archived</option>
                     </select>
                 </div>
-                <div class="flex gap-4 mt-6">
-                    <button type="submit"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">Save</button>
-                    <button type="button" id="cancelProjectBtn"
-                        class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+                <div class="flex gap-4 mt-8">
+                    <button type="submit" class="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:scale-105 transition-transform text-white px-6 py-3 rounded-2xl shadow-2xl font-bold text-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Save
+                    </button>
+                    <button type="button" id="cancelProjectBtn" class="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:scale-105 transition-transform text-white px-6 py-3 rounded-2xl shadow font-bold text-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Cancel
+                    </button>
                 </div>
             </form>
-
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js"></script>
-</body>
+    <script>
+    // ---------------------- JS BEGINS -----------------------
+    const API_URL = "/api";
+    let projects = [];
+    let tasks = [];
+    let chart;
 
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProjects();
+      fetchTasks();
+      setupModal();
+      setupProjectModal();
+      setupFABs();
+    });
+
+    // -------- Fetch & Display Projects (dashboard cards) --------
+    function fetchProjects() {
+      fetch(`${API_URL}/projects`)
+        .then(res => res.json())
+        .then(data => {
+          projects = data;
+          populateProjectDropdown();
+          populateProjectFilter();
+          displayProjectSection(); // dashboard cards grid
+        });
+    }
+    function displayProjectSection() {
+      const section = document.getElementById('projectSection');
+      if (!section) return;
+      section.innerHTML = projects.length
+        ? projects.map(project => `
+          <div class="bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg rounded-2xl p-6 transition-transform hover:scale-105">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-lg font-semibold">${project.name}</span>
+              <span class="text-xs px-2 py-1 rounded-full ${
+                project.status === "ACTIVE"
+                  ? "bg-green-700/40 text-green-300"
+                  : "bg-gray-700/60 text-gray-200"
+              }">${formatStatus(project.status)}</span>
+            </div>
+            <div class="flex justify-between mt-5">
+              <button onclick="openProjectModal(${project.id})"
+                class="px-4 py-1 bg-gradient-to-r from-green-500 to-teal-400 text-white rounded-xl font-bold shadow hover:scale-105 transition-transform">Edit</button>
+              <button onclick="deleteProject(${project.id})"
+                class="px-4 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl font-bold shadow hover:scale-105 transition-transform">Delete</button>
+            </div>
+          </div>
+        `).join('')
+        : `<div class="col-span-3 text-gray-400 text-center">No projects yet. Click 'Add Project' to get started.</div>`;
+    }
+    function populateProjectDropdown() {
+      const select = document.getElementById('taskProject');
+      if (!select) return;
+      select.innerHTML = projects.map(p =>
+        `<option value="${p.id}">${p.name}</option>`
+      ).join('');
+    }
+    function populateProjectFilter() {
+      const filter = document.getElementById('projectFilter');
+      if (!filter) return;
+      filter.innerHTML = `<option value="">All Projects</option>` +
+        projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+    function formatStatus(status) {
+      switch (status) {
+        case "PENDING": return "Pending";
+        case "IN_PROGRESS": return "In Progress";
+        case "COMPLETED": return "Completed";
+        case "ACTIVE": return "Active";
+        case "ARCHIVED": return "Archived";
+        default: return status;
+      }
+    }
+    function openProjectModal(projectId) {
+      document.getElementById('projectForm').reset();
+      document.getElementById('projectId').value = '';
+      document.getElementById('projectName').value = '';
+      if (document.getElementById('projectStatus')) {
+        document.getElementById('projectStatus').value = 'ACTIVE';
+      }
+      if (projectId) {
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+          document.getElementById('projectId').value = project.id;
+          document.getElementById('projectName').value = project.name;
+          if (document.getElementById('projectStatus')) {
+            document.getElementById('projectStatus').value = project.status || 'ACTIVE';
+          }
+        }
+      }
+      animateModal('projectModal');
+    }
+    function closeProjectModal() { closeModal('projectModal'); }
+    function deleteProject(projectId) {
+      if (!confirm("Are you sure you want to delete this project? All tasks under this project will also be deleted!")) return;
+      fetch(`${API_URL}/projects/${projectId}`, { method: "DELETE" })
+        .then(() => fetchProjects());
+    }
+    function setupProjectModal() {
+      document.getElementById('addProjectBtn').onclick = () => openProjectModal();
+      document.getElementById('closeProjectModalBtn').onclick = () => closeProjectModal();
+      document.getElementById('cancelProjectBtn').onclick = () => closeProjectModal();
+      document.getElementById('fabAddProject').onclick = () => openProjectModal();
+      document.getElementById('projectForm').onsubmit = function(e) {
+        e.preventDefault();
+        const id = document.getElementById('projectId').value;
+        const name = document.getElementById('projectName').value;
+        const status = document.getElementById('projectStatus') ? document.getElementById('projectStatus').value : "ACTIVE";
+        const projectData = { name, status };
+        const url = id ? `${API_URL}/projects/${id}` : `${API_URL}/projects`;
+        const method = id ? "PUT" : "POST";
+        fetch(url, {
+          method,
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(projectData)
+        })
+        .then(res => res.json())
+        .then(data => {
+          fetchProjects();
+          closeProjectModal();
+        });
+      };
+    }
+
+    // -------- Fetch & Display Tasks --------
+    function fetchTasks() {
+      fetch(`${API_URL}/tasks`)
+        .then(res => res.json())
+        .then(data => {
+          tasks = data;
+          displayTasks();
+          updateDashboardSummary();
+          drawChart();
+        });
+    }
+    function displayTasks() {
+      const projectId = document.getElementById('projectFilter').value;
+      const status = document.getElementById('statusFilter').value;
+      const sort = document.getElementById('sortOption').value;
+      let filtered = [...tasks];
+      if (projectId) filtered = filtered.filter(t => t.project && t.project.id == projectId);
+      if (status) filtered = filtered.filter(t => t.status === status);
+      if (sort === 'title') filtered.sort((a, b) => a.title.localeCompare(b.title));
+      else filtered.sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+      const taskList = document.getElementById('taskList');
+      taskList.innerHTML = filtered.length ? filtered.map(task => `
+        <div class="bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-semibold mb-1">${task.title}</h2>
+            <p class="text-gray-300 text-sm mb-2">${task.description || ""}</p>
+            <div class="text-xs flex gap-3 flex-wrap">
+              <span class="px-2 py-1 rounded-full ${statusColor(task.status)}">${formatStatus(task.status)}</span>
+              <span class="text-gray-400">Due: ${task.dueDate || '-'}</span>
+              <span class="text-gray-400">Project: ${task.project ? task.project.name : '-'}</span>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-3 md:mt-0">
+            <button onclick="openTaskModal(${task.id})" class="px-4 py-1 bg-gradient-to-r from-green-500 to-teal-400 text-white rounded-xl font-bold shadow hover:scale-105 transition-transform">Edit</button>
+            <button onclick="deleteTask(${task.id})" class="px-4 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl font-bold shadow hover:scale-105 transition-transform">Delete</button>
+          </div>
+        </div>
+      `).join('') : `<div class="text-gray-400">No tasks found.</div>`;
+    }
+    function statusColor(status) {
+      switch (status) {
+        case "PENDING": return "bg-yellow-700/60 text-yellow-200";
+        case "IN_PROGRESS": return "bg-blue-700/60 text-blue-200";
+        case "COMPLETED": return "bg-green-700/60 text-green-200";
+        case "ACTIVE": return "bg-green-700/40 text-green-200";
+        case "ARCHIVED": return "bg-gray-700/60 text-gray-300";
+        default: return "bg-gray-700/60 text-gray-300";
+      }
+    }
+    ['projectFilter', 'statusFilter', 'sortOption'].forEach(id =>
+      document.addEventListener('change', function(e) {
+        if (e.target.id === id) displayTasks();
+      })
+    );
+    function openTaskModal(taskId) {
+      const form = document.getElementById('taskForm');
+      document.getElementById('modalTitle').innerText = taskId ? "Edit Task" : "Add Task";
+      form.reset();
+      document.getElementById('taskId').value = '';
+      if (taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+          document.getElementById('taskId').value = task.id;
+          document.getElementById('taskTitle').value = task.title;
+          document.getElementById('taskDescription').value = task.description || '';
+          document.getElementById('taskStatus').value = task.status;
+          document.getElementById('taskDueDate').value = task.dueDate || '';
+          document.getElementById('taskProject').value = task.project ? task.project.id : '';
+        }
+      }
+      animateModal('taskModal');
+    }
+    function closeTaskModal() { closeModal('taskModal'); }
+    function submitTaskForm(event) {
+      event.preventDefault();
+      const id = document.getElementById('taskId').value;
+      const title = document.getElementById('taskTitle').value;
+      const description = document.getElementById('taskDescription').value;
+      const status = document.getElementById('taskStatus').value;
+      const dueDate = document.getElementById('taskDueDate').value;
+      const projectId = document.getElementById('taskProject').value;
+      const taskData = {
+        title, description, status, dueDate,
+        project: projectId ? { id: projectId } : null
+      };
+      const url = id ? `${API_URL}/tasks/${id}` : `${API_URL}/tasks`;
+      const method = id ? "PUT" : "POST";
+      fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(taskData)
+      })
+      .then(res => res.json())
+      .then(data => {
+        fetchTasks();
+        closeTaskModal();
+      });
+    }
+    function deleteTask(taskId) {
+      if (!confirm("Are you sure you want to delete this task?")) return;
+      fetch(`${API_URL}/tasks/${taskId}`, { method: "DELETE" })
+        .then(() => fetchTasks());
+    }
+    function setupModal() {
+      document.getElementById('addTaskBtn').onclick = () => openTaskModal();
+      document.getElementById('closeModalBtn').onclick = () => closeTaskModal();
+      document.getElementById('cancelBtn').onclick = () => closeTaskModal();
+      document.getElementById('fabAddTask').onclick = () => openTaskModal();
+      document.getElementById('taskForm').onsubmit = submitTaskForm;
+    }
+    function setupFABs() {
+      if (document.getElementById('fabAddProject')) {
+        document.getElementById('fabAddProject').onclick = () => openProjectModal();
+      }
+      if (document.getElementById('fabAddTask')) {
+        document.getElementById('fabAddTask').onclick = () => openTaskModal();
+      }
+    }
+    function animateModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove("hidden");
+      const inner = modal.querySelector("div");
+      inner.classList.remove("modal-hidden");
+      inner.classList.add("modal-active");
+      setTimeout(() => inner.classList.remove('opacity-0'), 10);
+      setTimeout(() => {
+        const input = inner.querySelector("input:not([type=hidden]),select,textarea");
+        if (input) input.focus();
+      }, 150);
+    }
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      const inner = modal.querySelector("div");
+      inner.classList.remove("modal-active");
+      inner.classList.add("modal-hidden");
+      setTimeout(() => { modal.classList.add("hidden"); }, 180);
+    }
+    // -- Dashboard summary and chart --
+    function updateDashboardSummary() {
+      const summary = document.getElementById('dashboard-summary');
+      const total = tasks.length;
+      const pending = tasks.filter(t => t.status === "PENDING").length;
+      const inProgress = tasks.filter(t => t.status === "IN_PROGRESS").length;
+      const completed = tasks.filter(t => t.status === "COMPLETED").length;
+      summary.innerHTML = `
+        <div class="bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg rounded-2xl px-4 py-3 text-center">
+          <div class="text-2xl font-bold">${total}</div>
+          <div class="text-xs text-gray-300">Total Tasks</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg rounded-2xl px-4 py-3 text-center">
+          <div class="text-2xl font-bold text-amber-400">${pending}</div>
+          <div class="text-xs text-amber-200">Pending</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg rounded-2xl px-4 py-3 text-center">
+          <div class="text-2xl font-bold text-blue-400">${inProgress}</div>
+          <div class="text-xs text-blue-200">In Progress</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg rounded-2xl px-4 py-3 text-center">
+          <div class="text-2xl font-bold text-green-400">${completed}</div>
+          <div class="text-xs text-green-200">Completed</div>
+        </div>
+      `;
+    }
+    function drawChart() {
+      const ctx = document.getElementById('dashboardChart').getContext('2d');
+      const pending = tasks.filter(t => t.status === "PENDING").length;
+      const inProgress = tasks.filter(t => t.status === "IN_PROGRESS").length;
+      const completed = tasks.filter(t => t.status === "COMPLETED").length;
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pending', 'In Progress', 'Completed'],
+          datasets: [{
+            data: [pending, inProgress, completed],
+            backgroundColor: [
+              'rgba(245, 158, 11, 0.9)',
+              'rgba(59, 130, 246, 0.85)',
+              'rgba(34,197,94,0.85)'
+            ]
+          }]
+        },
+        options: {
+          plugins: { legend: { labels: { color: "white", font: { weight: "bold" } } } },
+          cutout: "70%"
+        }
+      });
+    }
+    </script>
+</body>
 </html>

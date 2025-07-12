@@ -50,6 +50,11 @@ body {
   }
 }
 
+/* Force black text for dashboard summary cards */
+.stat-card .stat-value, .stat-card .stat-label {
+  color: #000 !important;
+}
+
 /* Forms and Inputs */
 .select {
   @apply bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-700 shadow-sm;

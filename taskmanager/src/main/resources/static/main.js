@@ -18,20 +18,20 @@ async function fetchTasks() {
     tasksList.innerHTML = '';
     tasks.forEach(task => {
       const taskDiv = document.createElement('div');
-      taskDiv.className = `p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between bg-gray-800 border border-gray-700 shadow`;
+      taskDiv.className = `p-6 rounded-xl flex flex-col md:flex-row md:items-center justify-between bg-gray-800 border border-gray-700 shadow mb-4 gap-4`;
       taskDiv.innerHTML = `
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-4 mb-2">
             <span class="text-lg font-semibold">${task.title}</span>
             <span class="badge bg-${task.status === 'COMPLETED' ? 'success' : task.status === 'IN_PROGRESS' ? 'warning' : 'secondary'} text-xs">${task.status}</span>
-            ${task.project && task.project.name ? `<span class='badge bg-info text-xs ml-2'>${task.project.name}</span>` : ''}
+            ${task.project && task.project.name ? `<span class='badge bg-info text-xs'>${task.project.name}</span>` : ''}
           </div>
-          ${task.description ? `<div class='text-gray-400 italic'>${task.description}</div>` : ''}
-          ${task.dueDate ? `<div class='text-sm text-orange-400'>Due: ${task.dueDate}</div>` : ''}
+          ${task.description ? `<div class='text-gray-400 italic mb-1'>${task.description}</div>` : ''}
+          ${task.dueDate ? `<div class='text-sm text-orange-400 mb-1'>Due: ${task.dueDate}</div>` : ''}
         </div>
-        <div class="flex gap-2 mt-2 md:mt-0">
-          <button class="btn btn-sm btn-outline-success" onclick="updateStatus(${task.id}, '${task.status}')">${task.status === 'COMPLETED' ? 'Mark Pending' : 'Complete'}</button>
-          <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.id})">Delete</button>
+        <div class="flex gap-4 mt-2 md:mt-0">
+          <button class="btn btn-sm btn-outline-info px-4" onclick="editTask(${task.id})">Edit</button>
+          <button class="btn btn-sm btn-outline-danger px-4" onclick="deleteTask(${task.id})">Delete</button>
         </div>
       `;
       tasksList.appendChild(taskDiv);
@@ -56,6 +56,17 @@ window.updateStatus = async function(id, currentStatus) {
 window.deleteTask = async function(id) {
   try {
     const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+    if (res.ok) fetchTasks();
+  } catch {}
+}
+
+window.updateTaskStatus = async function(id, newStatus) {
+  try {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
     if (res.ok) fetchTasks();
   } catch {}
 }
@@ -199,4 +210,83 @@ async function populateTaskProjectDropdown() {
 }
 
 // Call on load
-populateTaskProjectDropdown(); 
+populateTaskProjectDropdown();
+
+// --- Task Edit Modal Logic ---
+let editingTaskId = null;
+const taskEditModal = document.getElementById('task-edit-modal');
+const taskEditForm = document.getElementById('task-edit-form');
+const closeTaskEditModalBtn = document.getElementById('close-task-edit-modal');
+const cancelTaskEditBtn = document.getElementById('cancel-task-edit-btn');
+const editTaskTitle = document.getElementById('edit-task-title');
+const editTaskDescription = document.getElementById('edit-task-description');
+const editTaskDueDate = document.getElementById('edit-task-dueDate');
+const editTaskStatus = document.getElementById('edit-task-status');
+const editTaskProject = document.getElementById('edit-task-project');
+
+function openTaskEditModal(task) {
+  editingTaskId = task.id;
+  editTaskTitle.value = task.title;
+  editTaskDescription.value = task.description || '';
+  editTaskDueDate.value = task.dueDate || '';
+  editTaskStatus.value = task.status;
+  // Populate project dropdown and set selected
+  populateEditTaskProjectDropdown(task.project ? task.project.id : null).then(() => {
+    editTaskProject.value = task.project ? task.project.id : '';
+  });
+  taskEditModal.classList.remove('hidden');
+}
+function closeTaskEditModal() {
+  editingTaskId = null;
+  taskEditModal.classList.add('hidden');
+}
+if (closeTaskEditModalBtn) closeTaskEditModalBtn.onclick = closeTaskEditModal;
+if (cancelTaskEditBtn) cancelTaskEditBtn.onclick = closeTaskEditModal;
+taskEditForm.onsubmit = async (e) => {
+  e.preventDefault();
+  if (!editingTaskId) return;
+  const title = editTaskTitle.value.trim();
+  const description = editTaskDescription.value.trim();
+  const dueDate = editTaskDueDate.value;
+  const status = editTaskStatus.value;
+  const projectId = editTaskProject.value;
+  if (!title || !projectId) return;
+  // Fetch the project object by ID
+  const projectRes = await fetch(`/api/projects/${projectId}`);
+  const project = await projectRes.json();
+  try {
+    const res = await fetch(`${API_URL}/${editingTaskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description, dueDate, status, project })
+    });
+    if (res.ok) {
+      closeTaskEditModal();
+      fetchTasks();
+    }
+  } catch {}
+};
+async function populateEditTaskProjectDropdown(selectedId) {
+  try {
+    const res = await fetch('/api/projects');
+    const projects = await res.json();
+    editTaskProject.innerHTML = '<option value="">Select Project</option>';
+    projects.forEach(project => {
+      const opt = document.createElement('option');
+      opt.value = project.id;
+      opt.textContent = project.name;
+      if (selectedId && project.id == selectedId) opt.selected = true;
+      editTaskProject.appendChild(opt);
+    });
+  } catch {}
+}
+// --- End Task Edit Modal Logic ---
+
+window.editTask = async function(id) {
+  try {
+    const res = await fetch(`${API_URL}/${id}`);
+    if (!res.ok) return;
+    const task = await res.json();
+    openTaskEditModal(task);
+  } catch {}
+} 

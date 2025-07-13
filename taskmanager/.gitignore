@@ -4,6 +4,24 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+log/
+logs/
+*.log
+
+# Node (if any node_modules in static)
+node_modules/
+
+# Static build artifacts
+*.env
+.DS_Store
+
 ### STS ###
 .apt_generated
 .classpath

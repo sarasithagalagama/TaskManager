@@ -52,7 +52,3 @@ A modern, full-stack Task Manager application with a Spring Boot backend and a b
 
 ## Screenshots
 <img width="799" height="1073" alt="screencapture-localhost-8080-2025-07-13-22_16_51" src="https://github.com/user-attachments/assets/062a2eb4-ea7d-42c4-9984-4befded0f4dd" />
-
-
----
-Feel free to customize and extend this project for your needs!

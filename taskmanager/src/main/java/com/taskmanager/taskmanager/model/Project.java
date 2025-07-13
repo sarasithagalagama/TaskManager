@@ -1,6 +1,7 @@
 package com.taskmanager.taskmanager.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.util.List;
 
 @Entity
@@ -22,6 +23,7 @@ public class Project {
     private Status status = Status.ACTIVE; // default value
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Task> tasks;
 
     // Constructors

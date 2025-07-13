@@ -1,0 +1,88 @@
+body {
+    background: #181a1b;
+    color: #f1f1f1;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background: #23272a;
+    padding: 1.5rem 0;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome {
+    background: #222326;
+    padding: 2.5rem 3rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.welcome h2 {
+    margin-top: 0;
+    font-size: 2rem;
+}
+
+.primary-btn {
+    margin-top: 1.5rem;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(90deg, #4e54c8, #8f94fb);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    box-shadow: 0 2px 8px rgba(78,84,200,0.2);
+}
+
+.primary-btn:hover {
+    background: linear-gradient(90deg, #8f94fb, #4e54c8);
+    transform: translateY(-2px) scale(1.04);
+}
+
+footer {
+    text-align: center;
+    padding: 1rem 0;
+    background: #23272a;
+    font-size: 1rem;
+    color: #888;
+    letter-spacing: 1px;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+}
+
+input::placeholder, select::placeholder {
+  color: #cbd5e1 !important; /* Tailwind gray-300 */
+  opacity: 1;
+}
+
+input, select, textarea, .form-control, .form-select {
+  color: #fff !important;
+  background-color: #374151 !important;
+  border: 1.5px solid #22304a !important;
+}
+input:focus, select:focus, textarea:focus, .form-control:focus, .form-select:focus, input.form-control:focus, select.form-select:focus {
+  color: #000 !important;
+  background-color: #374151 !important;
+  border: 1.5px solid #4f46e5 !important; /* Indigo border on focus */
+  box-shadow: 0 0 0 2px #6366f133;
+} 

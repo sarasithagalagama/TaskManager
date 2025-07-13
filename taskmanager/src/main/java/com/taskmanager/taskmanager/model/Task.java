@@ -1,6 +1,7 @@
 package com.taskmanager.taskmanager.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.time.LocalDate;
 
 @Entity
@@ -23,6 +24,7 @@ public class Task {
     // Many tasks belong to one project
     @ManyToOne
     @JoinColumn(name = "project_id")
+    @JsonBackReference
     private Project project;
 
     public enum Status {
